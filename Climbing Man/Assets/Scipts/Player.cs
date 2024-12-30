@@ -69,12 +69,12 @@ namespace StarterAssets
 
         public LayerMask Ladder;
 
-        private GameObject  Firsthit;
-        private  bool IfclimbOn = false;
-        private  bool IfclimbOff = false;
+        private GameObject Firsthit;
+        private bool IfclimbOn = false;
+        private bool IfclimbOff = false;
         //private  bool IfclimbRight = false;
-        private  bool IfclimbingOn = false;
-        private  bool IfclimbingOff = false;
+        private bool IfclimbingOn = false;
+        private bool IfclimbingOff = false;
         //private  bool IfRayRight = false;
         GameObject hitObjectOn;
         GameObject hitObjectOff;
@@ -143,18 +143,22 @@ namespace StarterAssets
             }
         }
         //
-        public enum PlayerState 
-        {  
+        public enum PlayerState
+        {
             Move,
             Jump,
             Fall,
             Climb,
             Falldown,
             Top,
-            Jumpdown
+            Jumpdown,
+            Wire // ¸ÖË÷
 
         }
         public PlayerState State = PlayerState.Move;
+        private GameObject wireObject;
+        private bool isHanging = false;
+        private float wireSpeed = 2.0f;
 
         private void Awake()
         {
@@ -182,16 +186,17 @@ namespace StarterAssets
         private void Update()
         {
             //Debug.DrawRay(FallDownCheck.transform.position, Vector3.up.normalized * 0.5f, Color.blue);
-            switch (State )
+            switch (State)
             {
                 case PlayerState.Move:
                     Move();
-                    if(Input.GetMouseButton(0))
+                    CheckWireCollision();
+                    if (Input.GetMouseButton(0))
                     {
                         BeforeJump();
                         State = PlayerState.Jump;
                     }
-                    else if(!Grounded)
+                    else if (!Grounded)
                     {
                         State = PlayerState.Jumpdown;
                     }
@@ -199,7 +204,7 @@ namespace StarterAssets
                 case PlayerState.Jumpdown:
                     JumpDown();
                     {
-                        if(Grounded)
+                        if (Grounded)
                         {
                             State = PlayerState.Move;
                         }
@@ -207,7 +212,7 @@ namespace StarterAssets
                     break;
                 case PlayerState.Jump:
                     Jump();
-                    if(Input.GetMouseButtonUp(0))
+                    if (Input.GetMouseButtonUp(0))
                     {
                         State = PlayerState.Fall;
                     }
@@ -220,7 +225,7 @@ namespace StarterAssets
                         Ifjump = false;
                         transform.rotation = Firsthit.transform.rotation;
                         HitObject = Firsthit;
-                        if(Mathf.Approximately(Firsthit.transform.eulerAngles.y, 0f))
+                        if (Mathf.Approximately(Firsthit.transform.eulerAngles.y, 0f))
                         {
                             transform.position = new Vector3(transform.position.x, (Firsthit.transform.position.y - 0.5f),
                                 (Firsthit.transform.position.z - 0.5f));
@@ -232,7 +237,7 @@ namespace StarterAssets
                                 transform.position.z);
                             Debug.Log("90");
                         }
-                        else if(Mathf.Approximately(Firsthit.transform.eulerAngles.y, -90f))
+                        else if (Mathf.Approximately(Firsthit.transform.eulerAngles.y, -90f))
                         {
                             transform.position = new Vector3((Firsthit.transform.position.x + 0.5f), (Firsthit.transform.position.y - 0.5f),
                                 transform.position.z);
@@ -244,13 +249,13 @@ namespace StarterAssets
                                 (Firsthit.transform.position.z + 0.5f));
                             Debug.Log("180");
                         }
-                            Climbmove = true;
+                        Climbmove = true;
                         State = PlayerState.Climb;
                     }
-                    else if(Grounded )
+                    else if (Grounded)
                     {
                         State = PlayerState.Move;
-                    }   
+                    }
                     break;
                 case PlayerState.Climb:
                     Climb();
@@ -261,13 +266,13 @@ namespace StarterAssets
                         Falltime = 0.2f;
                         State = PlayerState.Falldown;
                     }
-                    if(Topcheck)
+                    if (Topcheck)
                     {
-                        if(timeout >0)
+                        if (timeout > 0)
                         {
                             timeout -= Time.deltaTime;
                         }
-                        if (Input.GetKeyDown(KeyCode.W) && timeout <0)
+                        if (Input.GetKeyDown(KeyCode.W) && timeout < 0)
                         {
                             timeout = -2f;
                             if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 0f))
@@ -275,7 +280,7 @@ namespace StarterAssets
                                 Target = new Vector3(transform.position.x, (transform.position.y + 3f),
                                 (transform.position.z + 1.5f));
                             }
-                            else if(Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 90f))
+                            else if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 90f))
                             {
                                 Target = new Vector3((transform.position.x + 1.5f), (transform.position.y + 3f),
                                 transform.position.z);
@@ -312,7 +317,7 @@ namespace StarterAssets
                     {
                         State = PlayerState.Move;
                     }
-                    if (Falltime <0)
+                    if (Falltime < 0)
                     {
                         if (FalldownCheck())
                         {
@@ -344,13 +349,16 @@ namespace StarterAssets
                         }
                     }
                     break;
+                case PlayerState.Wire:
+                    HandleWireActions();
+                    break;
 
 
             }
         }
         private void FixedUpdate()
         {
-             GroundedCheck();
+            GroundedCheck();
         }
         private void LateUpdate()
         {
@@ -369,9 +377,9 @@ namespace StarterAssets
         private void CameraRotation()
         {
             if (!Camerarotate) return;
-                #region 
-                // if there is an input and camera position is not fixed
-                if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
+            #region 
+            // if there is an input and camera position is not fixed
+            if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
             {
                 //Don't multiply mouse input by Time.deltaTime;
                 float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
@@ -383,8 +391,8 @@ namespace StarterAssets
             _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
 
             // Cinemachine will follow this target
-             CinemachineCameraTarget.transform.rotation = Quaternion.Euler(CameraAngleOverride,
-               _cinemachineTargetYaw, 0.0f);
+            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(CameraAngleOverride,
+              _cinemachineTargetYaw, 0.0f);
             #endregion 
         }
         private void BeforeJump()
@@ -453,51 +461,51 @@ namespace StarterAssets
         }
         private void Move()
         {
-                //CameraOpen
-                Camerarotate = true;
-                #region
-                float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            //CameraOpen
+            Camerarotate = true;
+            #region
+            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
 
-                if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
 
-                float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
 
-                float speedOffset = 0.1f;
+            float speedOffset = 0.1f;
 
-                // accelerate or decelerate to target speed
-                if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                    currentHorizontalSpeed > targetSpeed + speedOffset)
-                {
+            // accelerate or decelerate to target speed
+            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
+                currentHorizontalSpeed > targetSpeed + speedOffset)
+            {
 
-                    _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed,
-                        Time.deltaTime * SpeedChangeRate);
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed,
+                    Time.deltaTime * SpeedChangeRate);
 
-                    // round speed to 3 decimal places
-                    _speed = Mathf.Round(_speed * 1000f) / 1000f;
-                }
-                else
-                {
-                    _speed = targetSpeed;
-                }
+                // round speed to 3 decimal places
+                _speed = Mathf.Round(_speed * 1000f) / 1000f;
+            }
+            else
+            {
+                _speed = targetSpeed;
+            }
 
-                // normalise input direction
-                Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+            // normalise input direction
+            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
 
-                if (_input.move != Vector2.zero)
-                {
-                    _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                      _mainCamera.transform.eulerAngles.y;
-                    float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                        RotationSmoothTime);
+            if (_input.move != Vector2.zero)
+            {
+                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
+                                  _mainCamera.transform.eulerAngles.y;
+                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
+                    RotationSmoothTime);
 
-                    // rotate to face input direction relative to camera position
-                    transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-                }
+                // rotate to face input direction relative to camera position
+                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+            }
 
-                // move the player
-                Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-                _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime));
-                #endregion
+            // move the player
+            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime));
+            #endregion
         }
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
         {
@@ -508,7 +516,7 @@ namespace StarterAssets
         private void OnDrawGizmos()
         {
 
-           // Debug.DrawRay(LadderCheck.transform.position, Vector3.up.normalized * MaxDistanceOn, Color.blue);
+            // Debug.DrawRay(LadderCheck.transform.position, Vector3.up.normalized * MaxDistanceOn, Color.blue);
         }
         private bool ClimbCheck()
         {
@@ -619,7 +627,7 @@ namespace StarterAssets
                     target = new Vector3(transform.position.x, (hitObjectOff.transform.position.y - 0.5f),
                         (hitObjectOff.transform.position.z + 0.5f));
                 }
-                transform.position = Vector3.MoveTowards(transform.position,target, 4f * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, target, 4f * Time.deltaTime);
                 if (Vector3.Distance(transform.position, target) < 0.1f)
                 {
                     IfclimbingOff = false;
@@ -632,13 +640,13 @@ namespace StarterAssets
             float speed = 3f;
             if (Climbmove)
             {
-                if (HitObject != null && HitObject.tag == "Ladder"|| HitObject.tag == "Top")
+                if (HitObject != null && HitObject.tag == "Ladder" || HitObject.tag == "Top")
                 {
                     P1 = HitObject.GetComponent<Ladder>().Point1;
                     P2 = HitObject.GetComponent<Ladder>().Point2;
                     if (_input.move.x > 0)
                     {
-                        transform.position = Vector3.MoveTowards(transform.position, P1.transform .position , speed * Time.deltaTime);
+                        transform.position = Vector3.MoveTowards(transform.position, P1.transform.position, speed * Time.deltaTime);
 
                     }
                     if (_input.move.x < 0)
@@ -655,7 +663,7 @@ namespace StarterAssets
                     Turn = HitObject.GetComponent<SpecialLadder>().Turn;
                     if (Ifturn2)
                     {
-                        transform.position = Vector3.MoveTowards(transform.position, 
+                        transform.position = Vector3.MoveTowards(transform.position,
                             P2.transform.position, speed * Time.deltaTime);
                         if (Vector3.Distance(transform.position, P2.transform.position) < 0.1f)
                         {
@@ -666,14 +674,14 @@ namespace StarterAssets
                     {
                         if (_input.move.x > 0)
                         {
-                            transform.position = Vector3.MoveTowards(transform.position, 
+                            transform.position = Vector3.MoveTowards(transform.position,
                                 P1.transform.position, speed * Time.deltaTime);
 
                         }
                         if (_input.move.x < 0)
                         {
                             //position.x += _input.move.x * speed * Time.deltaTime;
-                            transform.position = Vector3.MoveTowards(transform.position, 
+                            transform.position = Vector3.MoveTowards(transform.position,
                                 P2.transform.position, speed * Time.deltaTime);
 
                         }
@@ -695,9 +703,9 @@ namespace StarterAssets
                     Turn = HitObject.GetComponent<SpecialLadder>().Turn;
                     if (Ifturn1)
                     {
-                        transform.position = Vector3.MoveTowards(transform.position, 
+                        transform.position = Vector3.MoveTowards(transform.position,
                             P1.transform.position, speed * Time.deltaTime);
-                        if(Vector3.Distance(transform.position, P1.transform.position) < 0.1f)
+                        if (Vector3.Distance(transform.position, P1.transform.position) < 0.1f)
                         {
                             Ifturn1 = false;
                             Debug.Log($"{P1.name}");
@@ -707,14 +715,14 @@ namespace StarterAssets
                     {
                         if (_input.move.x > 0)
                         {
-                            transform.position = Vector3.MoveTowards(transform.position, 
+                            transform.position = Vector3.MoveTowards(transform.position,
                                 P1.transform.position, speed * Time.deltaTime);
 
                         }
                         if (_input.move.x < 0)
                         {
                             //position.x += _input.move.x * speed * Time.deltaTime;
-                            transform.position = Vector3.MoveTowards(transform.position, 
+                            transform.position = Vector3.MoveTowards(transform.position,
                                 P2.transform.position, speed * Time.deltaTime);
 
                         }
@@ -742,25 +750,25 @@ namespace StarterAssets
                 else Topcheck = false;
             }
 
-        }    
+        }
         private void Totop()
         {
-            
+
             Vector3 velocity = new Vector3(0f, 0f, 0f);
             velocity.y += Gravity * Time.deltaTime * 0.3f;
-            if(Ifgo )transform.position = Vector3.MoveTowards(transform.position, Target,8f * Time .deltaTime );
-            if(Vector3 .Distance (transform.position, Target) < 0.1f)
+            if (Ifgo) transform.position = Vector3.MoveTowards(transform.position, Target, 8f * Time.deltaTime);
+            if (Vector3.Distance(transform.position, Target) < 0.1f)
             {
                 Iffall = true;
                 Ifgo = false;
             }
-            if(Iffall)
+            if (Iffall)
             {
                 Vector3 targetPosition = new Vector3(transform.position.x, velocity.y, transform.position.z);
                 targetPosition = new Vector3(transform.position.x, velocity.y, transform.position.z);
                 transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * 4f);
             }
-            
+
         }
         private void Falldown()
         {
@@ -785,7 +793,96 @@ namespace StarterAssets
             targetPosition = new Vector3(transform.position.x, velocity.y, transform.position.z - 1.5f);
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * 6f);
         }
+        private void CheckWireCollision()
+        {
+            RaycastHit hit;
+            Vector3 rayStart = transform.position + Vector3.up * 0.5f;
+            Debug.DrawRay(rayStart, Vector3.down * 1.5f, Color.red, 1.0f);
 
+            if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.5f))
+            {
+                if (hit.collider != null && hit.collider.CompareTag("Wire"))//Tag
+                {
+                    wireObject = hit.collider.gameObject;
+                    State = PlayerState.Wire;
+                    isHanging = true;
+
+                    //¶ÔÆë
+                    Vector3 wirePosition = wireObject.transform.position;
+                    float verticalOffset = -1f;
+                    transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset , wirePosition.z);
+
+                    //Ðý×ª
+                    Vector3 forwardDirection = wireObject.transform.forward;
+                    transform.rotation = Quaternion.LookRotation(forwardDirection, Vector3.up);
+
+                    Debug.Log("Wire object detected: " + wireObject.name);
+                }
+                else
+                {
+                    Debug.Log("Raycast hit an object, but it is not wire");
+                    wireObject = null;
+                }
+            }
+            else
+            {
+                Debug.Log("Raycast did not hit any object.");
+                wireObject = null;
+            }
+
+        }
+
+        private void HandleWireActions()
+        {
+            if (wireObject == null)
+            {
+                Debug.LogWarning("wireObject is null.Exiting HandleWireActions.");
+                return;
+            }
+
+            Vector3 wirePosition = wireObject.transform.position;
+
+            if (isHanging)
+            {
+              
+                float verticalOffset = -1f;
+                transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
+            }
+
+            if (Input.GetKeyDown(KeyCode.W) && isHanging)
+            {
+                isHanging = false;
+                float verticalOffset = 1f;
+                transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
+            }
+            else if (Input.GetKeyDown(KeyCode.S))
+            {
+                if (isHanging)
+                {
+                    State = PlayerState.Jumpdown;
+                    wireObject = null;
+                    return;
+                }
+                else
+                {
+                    isHanging = true;
+                    float verticalOffset = -1f;
+                    transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
+                }
+            }
+
+            float horizontalInput = Input.GetAxis("Horizontal");
+            if(Mathf.Abs(horizontalInput)> 0.1f)
+            {
+                Vector3 moveDirection = wireObject != null ? wireObject.transform.up : Vector3.zero;
+                Debug.Log("Wire Right Direction: " + moveDirection);
+                transform.position += moveDirection * horizontalInput * wireSpeed * Time.deltaTime;
+                //transform.position += wireObject.transform.right * horizontalInput * wireSpeed * Time.deltaTime;
+            }
+            Debug.Log("Wire object detected:" + wireObject.name);
+            Debug.Log("Player State:" + State);
+            
+        }
     }
 
 }
