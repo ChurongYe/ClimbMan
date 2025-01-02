@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using TMPro;
@@ -8,6 +9,9 @@ using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
+using UnityEngine.Rendering;
+using UnityEngine.SocialPlatforms.Impl;
+using UnityEngine.UIElements;
 using static System.Net.WebRequestMethods;
 using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 using static UnityEngine.UI.Image;
@@ -36,6 +40,8 @@ namespace StarterAssets
 
         public float Gravity = -15.0f;
 
+        public bool IfIdle;
+
         [Header("Player Grounded")]
 
         public bool Grounded = true;
@@ -57,8 +63,22 @@ namespace StarterAssets
 
         private Vector3 PlayDirection;
 
-        [Header("Player Climb")]
+        [Header("Player Throw")]
+        public LayerMask Wall;
 
+        public Transform throwpoint;
+
+        public bool IfMove;
+        public Vector3 Hitwall;
+        private bool Ifwall = false;
+        private bool Ifmove = false;
+        private int i = 0;
+        private bool Ifwheel = false;
+        private bool Ifputdown = false;
+        private Vector3 originalpoint;
+        private GameObject  wall;
+        RaycastHit hitwall;
+        [Header("Player Climb")]
         public GameObject HeadCheck;
 
         public GameObject FootCheck;
@@ -69,18 +89,18 @@ namespace StarterAssets
 
         public LayerMask Ladder;
 
+        public bool IfClimbmove;
+
         private GameObject  Firsthit;
         private  bool IfclimbOn = false;
         private  bool IfclimbOff = false;
         //private  bool IfclimbRight = false;
-        private  bool IfclimbingOn = false;
-        private  bool IfclimbingOff = false;
+        public  bool IfclimbingOn = false;
+        public  bool IfclimbingOff = false;
         //private  bool IfRayRight = false;
         GameObject hitObjectOn;
         GameObject hitObjectOff;
         private bool Climbmove = false;
-        private bool Left;
-        private bool Right;
         private float Falltime = 0.0f;
         private bool Iffall = false;
         private bool Ifgo = true;
@@ -98,7 +118,7 @@ namespace StarterAssets
 
         public GameObject CinemachineCameraTarget;
 
-        public GameObject Camera;
+        public GameObject camera;
 
         public float CameraAngleOverride = 0.0f;
 
@@ -151,7 +171,8 @@ namespace StarterAssets
             Climb,
             Falldown,
             Top,
-            Jumpdown
+            Jumpdown,
+            Throw
 
         }
         public PlayerState State = PlayerState.Move;
@@ -163,10 +184,11 @@ namespace StarterAssets
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
             }
-            Cursor.lockState = CursorLockMode.Locked;
+            UnityEngine.Cursor.lockState = CursorLockMode.Locked;
         }
         private void Start()
         {
+            //
             CinemachineCameraTarget.transform.parent = this.transform;
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
 
@@ -218,33 +240,32 @@ namespace StarterAssets
                     if (ClimbCheck())
                     {
                         Ifjump = false;
-                        transform.rotation = Firsthit.transform.rotation;
                         HitObject = Firsthit;
-                        if(Mathf.Approximately(Firsthit.transform.eulerAngles.y, 0f))
+                        float Angle = Mathf.Repeat(Firsthit.transform.eulerAngles.y + 180f, 360f) - 180f;
+                        Vector3 rotation = transform.eulerAngles;
+                        rotation.y = Angle;
+                        transform.eulerAngles = rotation;
+                        if (Mathf.Approximately(Angle, 0f))
                         {
                             transform.position = new Vector3(transform.position.x, (Firsthit.transform.position.y - 0.5f),
                                 (Firsthit.transform.position.z - 0.5f));
-                            Debug.Log("0");
                         }
-                        else if (Mathf.Approximately(Firsthit.transform.eulerAngles.y, 90f))
+                        else if (Mathf.Approximately(Angle, 90f))
                         {
                             transform.position = new Vector3((Firsthit.transform.position.x - 0.5f), (Firsthit.transform.position.y - 0.5f),
                                 transform.position.z);
-                            Debug.Log("90");
                         }
-                        else if(Mathf.Approximately(Firsthit.transform.eulerAngles.y, -90f))
+                        else if (Mathf.Approximately(Angle, -90f))
                         {
                             transform.position = new Vector3((Firsthit.transform.position.x + 0.5f), (Firsthit.transform.position.y - 0.5f),
                                 transform.position.z);
-                            Debug.Log("-90");
                         }
-                        else if (Mathf.Approximately(Firsthit.transform.eulerAngles.y, 180f))
+                        else if (Mathf.Approximately(Angle, -180f))
                         {
                             transform.position = new Vector3(transform.position.x, (Firsthit.transform.position.y - 0.5f),
                                 (Firsthit.transform.position.z + 0.5f));
-                            Debug.Log("180");
                         }
-                            Climbmove = true;
+                        Climbmove = true;
                         State = PlayerState.Climb;
                     }
                     else if(Grounded )
@@ -270,22 +291,23 @@ namespace StarterAssets
                         if (Input.GetKeyDown(KeyCode.W) && timeout <0)
                         {
                             timeout = -2f;
-                            if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 0f))
+                            float Angle = Mathf.Repeat(hitObjectOn.transform.eulerAngles.y + 180f, 360f) - 180f;
+                            if (Mathf.Approximately(Angle, 0f))
                             {
                                 Target = new Vector3(transform.position.x, (transform.position.y + 3f),
                                 (transform.position.z + 1.5f));
                             }
-                            else if(Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 90f))
+                            else if(Mathf.Approximately(Angle, 90f))
                             {
                                 Target = new Vector3((transform.position.x + 1.5f), (transform.position.y + 3f),
                                 transform.position.z);
                             }
-                            else if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, -90f))
+                            else if (Mathf.Approximately(Angle, -90f))
                             {
                                 Target = new Vector3((transform.position.x - 1.5f), (transform.position.y + 3f),
                                 transform.position.z);
                             }
-                            else if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 180f))
+                            else if (Mathf.Approximately(Angle, -180f))
                             {
                                 Target = new Vector3(transform.position.x, (transform.position.y + 3f),
                                  (transform.position.z - 1.5f));
@@ -294,6 +316,12 @@ namespace StarterAssets
                             State = PlayerState.Top;
                         }
                     }
+                    //Throw
+                    if(Input.GetMouseButtonUp(0))
+                    {
+                        i = 1;
+                        State = PlayerState.Throw;
+                    }
                     break;
                 case PlayerState.Top:
                     Totop();
@@ -301,6 +329,55 @@ namespace StarterAssets
                         if (Iffall && Grounded)
                         {
                             Iffall = false;
+                            State = PlayerState.Move;
+                        }
+                    }
+                    break;
+                case PlayerState.Throw:
+                    Throw();
+                    FalldownCheck();
+                    {
+                        if (Ifwheel)
+                        {
+                            if(FalldownCheck())
+                            {
+                                HitObject = Firsthit;
+                                float Angle = Mathf.Repeat(Firsthit.transform.eulerAngles.y + 180f, 360f) - 180f;
+                                Vector3 rotation = transform.eulerAngles;
+                                rotation.y = Angle;
+                                transform.eulerAngles = rotation;
+                                if (Mathf.Approximately(Angle, 0f))
+                                {
+                                    transform.position = new Vector3(transform.position.x, (Firsthit.transform.position.y - 0.5f),
+                                        (Firsthit.transform.position.z - 0.5f));
+                                }
+                                else if (Mathf.Approximately(Angle, 90f))
+                                {
+                                    transform.position = new Vector3((Firsthit.transform.position.x - 0.5f), (Firsthit.transform.position.y - 0.5f),
+                                        transform.position.z);
+                                }
+                                else if (Mathf.Approximately(Angle, -90f))
+                                {
+                                    transform.position = new Vector3((Firsthit.transform.position.x + 0.5f), (Firsthit.transform.position.y - 0.5f),
+                                        transform.position.z);
+                                }
+                                else if (Mathf.Approximately(Angle, -180f))
+                                {
+                                    transform.position = new Vector3(transform.position.x, (Firsthit.transform.position.y - 0.5f),
+                                        (Firsthit.transform.position.z + 0.5f));
+                                }
+                                Climbmove = true;
+                                UnityEngine.Cursor.visible = false;
+                                UnityEngine.Cursor.lockState = CursorLockMode.Locked ;
+                                State = PlayerState.Climb;
+                                Ifwheel = false;
+                            }    
+                        }
+                        if(Grounded )
+                        {
+                            UnityEngine.Cursor.visible = false;
+                            UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+                            Ifwheel = false;
                             State = PlayerState.Move;
                         }
                     }
@@ -316,24 +393,27 @@ namespace StarterAssets
                     {
                         if (FalldownCheck())
                         {
-                            transform.rotation = Firsthit.transform.rotation;
                             HitObject = Firsthit;
-                            if (Mathf.Approximately(Firsthit.transform.eulerAngles.y, 0f))
+                            float Angle = Mathf.Repeat(Firsthit.transform.eulerAngles.y + 180f, 360f) - 180f;
+                            Vector3 rotation = transform.eulerAngles;
+                            rotation.y = Angle;
+                            transform.eulerAngles = rotation;
+                            if (Mathf.Approximately(Angle, 0f))
                             {
                                 transform.position = new Vector3(transform.position.x, (Firsthit.transform.position.y - 0.5f),
                                     (Firsthit.transform.position.z - 0.5f));
                             }
-                            else if (Mathf.Approximately(Firsthit.transform.eulerAngles.y, 90f))
+                            else if (Mathf.Approximately(Angle, 90f))
                             {
                                 transform.position = new Vector3((Firsthit.transform.position.x - 0.5f), (Firsthit.transform.position.y - 0.5f),
                                     transform.position.z);
                             }
-                            else if (Mathf.Approximately(Firsthit.transform.eulerAngles.y, -90f))
+                            else if (Mathf.Approximately(Angle, -90f))
                             {
                                 transform.position = new Vector3((Firsthit.transform.position.x + 0.5f), (Firsthit.transform.position.y - 0.5f),
                                     transform.position.z);
                             }
-                            else if (Mathf.Approximately(Firsthit.transform.eulerAngles.y, 180f))
+                            else if (Mathf.Approximately(Angle, -180f))
                             {
                                 transform.position = new Vector3(transform.position.x, (Firsthit.transform.position.y - 0.5f),
                                     (Firsthit.transform.position.z + 0.5f));
@@ -416,7 +496,7 @@ namespace StarterAssets
                 transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
                 PlayDirection = transform.forward;
                 //JumpForce
-                jumpForce = inputDirection.magnitude;
+                jumpForce = inputDirection.magnitude/3;
                 jumpForce = Mathf.Clamp(jumpForce, 0.1f, 4f);
                 _verticalVelocity = Mathf.Sqrt(jumpForce * -Sensitivity * Gravity);
 
@@ -425,6 +505,7 @@ namespace StarterAssets
         }
         private void Fall()
         {
+            //
             //CameraOpen
             Camerarotate = true;
             CinemachineCameraTarget.transform.parent = this.transform;
@@ -457,10 +538,17 @@ namespace StarterAssets
                 Camerarotate = true;
                 #region
                 float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            if (_input.move == Vector2.zero)
+            {
+                IfIdle = true;
+                targetSpeed = 0.0f;
+            }
+            else
+            {
+                IfIdle = false;
+            }
 
-                if (_input.move == Vector2.zero) targetSpeed = 0.0f;
-
-                float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
 
                 float speedOffset = 0.1f;
 
@@ -504,11 +592,6 @@ namespace StarterAssets
             if (lfAngle < -360f) lfAngle += 360f;
             if (lfAngle > 360f) lfAngle -= 360f;
             return Mathf.Clamp(lfAngle, lfMin, lfMax);
-        }
-        private void OnDrawGizmos()
-        {
-
-           // Debug.DrawRay(LadderCheck.transform.position, Vector3.up.normalized * MaxDistanceOn, Color.blue);
         }
         private bool ClimbCheck()
         {
@@ -568,23 +651,26 @@ namespace StarterAssets
 
             if (IfclimbingOn)
             {
-                transform.rotation = hitObjectOn.transform.rotation;
-                if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 0f))
+                float Angle = Mathf.Repeat(hitObjectOn.transform.eulerAngles.y + 180f, 360f) - 180f;
+                Vector3 rotation = transform.eulerAngles;
+                rotation.y = Angle;
+                transform.eulerAngles = rotation;
+                if (Mathf.Approximately(Angle, 0f))
                 {
                     target = new Vector3(transform.position.x, (hitObjectOn.transform.position.y - 0.5f),
                         (hitObjectOn.transform.position.z - 0.5f));
                 }
-                else if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 90f))
+                else if (Mathf.Approximately(Angle, 90f))
                 {
                     target = new Vector3((hitObjectOn.transform.position.x - 0.5f), (hitObjectOn.transform.position.y - 0.5f),
                         transform.position.z);
                 }
-                else if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, -90f))
+                else if (Mathf.Approximately(Angle, -90f))
                 {
                     target = new Vector3((hitObjectOn.transform.position.x + 0.5f), (hitObjectOn.transform.position.y - 0.5f),
                         transform.position.z);
                 }
-                else if (Mathf.Approximately(hitObjectOn.transform.eulerAngles.y, 180f))
+                else if (Mathf.Approximately(Angle, -180f))
                 {
                     target = new Vector3(transform.position.x, (hitObjectOn.transform.position.y - 0.5f),
                         (hitObjectOn.transform.position.z + 0.5f));
@@ -598,23 +684,26 @@ namespace StarterAssets
             }
             if (IfclimbingOff)
             {
-                transform.rotation = hitObjectOff.transform.rotation;
-                if (Mathf.Approximately(hitObjectOff.transform.eulerAngles.y, 0f))
+                float Angle = Mathf.Repeat(hitObjectOff.transform.eulerAngles.y + 180f, 360f) - 180f;
+                Vector3 rotation = transform.eulerAngles;
+                rotation.y = Angle;
+                transform.eulerAngles = rotation;
+                if (Mathf.Approximately(Angle, 0f))
                 {
                     target = new Vector3(transform.position.x, (hitObjectOff.transform.position.y - 0.5f),
                         (hitObjectOff.transform.position.z - 0.5f));
                 }
-                else if (Mathf.Approximately(hitObjectOff.transform.eulerAngles.y, 90f))
+                else if (Mathf.Approximately(Angle, 90f))
                 {
                     target = new Vector3((hitObjectOff.transform.position.x - 0.5f), (hitObjectOff.transform.position.y - 0.5f),
                         transform.position.z);
                 }
-                else if (Mathf.Approximately(hitObjectOff.transform.eulerAngles.y, -90f))
+                else if (Mathf.Approximately(Angle, -90f))
                 {
                     target = new Vector3((hitObjectOff.transform.position.x + 0.5f), (hitObjectOff.transform.position.y - 0.5f),
                         transform.position.z);
                 }
-                else if (Mathf.Approximately(hitObjectOff.transform.eulerAngles.y, 180f))
+                else if (Mathf.Approximately(Angle, -180f))
                 {
                     target = new Vector3(transform.position.x, (hitObjectOff.transform.position.y - 0.5f),
                         (hitObjectOff.transform.position.z + 0.5f));
@@ -632,6 +721,16 @@ namespace StarterAssets
             float speed = 3f;
             if (Climbmove)
             {
+                //
+                if (_input.move.x != 0)
+                {
+                    IfClimbmove = true;
+                }
+                else
+                {
+                    IfClimbmove = false;
+                }
+                //
                 if (HitObject != null && HitObject.tag == "Ladder"|| HitObject.tag == "Top")
                 {
                     P1 = HitObject.GetComponent<Ladder>().Point1;
@@ -762,6 +861,112 @@ namespace StarterAssets
             }
             
         }
+        private void Throw()
+        {
+            UnityEngine.Cursor.visible = false;
+            UnityEngine.Cursor.lockState = CursorLockMode.Confined ;
+            RaycastHit hit;
+            RaycastHit hit1;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            float rayLength = 10.0f;
+            Physics.Raycast(transform .position, transform.forward , out hit,5f, Wall);
+            wall = hit.collider.gameObject;
+            if(i == 1) Ifwall = Physics.Raycast(ray, out hitwall, 50f, Wall);
+            if (Ifwall)
+            {
+                Hitwall = hitwall.point;
+
+            }
+            Debug.DrawRay(ray.origin, ray.direction * rayLength, Color.red);
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (i == 1)
+                {
+                    Ifputdown = true;
+                }
+            }
+            if (!Ifmove && Ifputdown)
+            {
+                if (Ifwall)
+                {
+                    if (Input.GetMouseButtonUp(0) && wall== hitwall.collider .gameObject )
+                    {
+                        Ifputdown = false;
+                        Ifmove = true;
+                        i = 0;
+                    }
+                }
+            }
+            if(Ifmove)
+            {
+                float speed = 0.03f;
+                transform.position = Vector3.MoveTowards(transform.position, Hitwall, speed);
+            }
+            if(Ifmove && Vector3.Distance(transform.position, Hitwall) <0.1f)
+            {
+                float Angle = Mathf.Repeat(transform.eulerAngles.y + 180f, 360f) - 180f;
+                if (Mathf.Approximately(Angle, 0f))
+                {
+                    transform.position = new Vector3(transform.position.x, transform.position.y, (transform.position.z - 0.6f));
+                }
+                else if(Mathf.Approximately(Angle, 90f))
+                {
+                    transform.position = new Vector3((transform.position.x - 0.6f), transform.position.y, transform.position.z);
+                }
+                else if (Mathf.Approximately(Angle, -90f))
+                {
+                    transform.position = new Vector3((transform.position.x + 0.6f), transform.position.y, transform.position.z);
+                }
+                else if (Mathf.Approximately(Angle, -180f))
+                {
+                    transform.position = new Vector3(transform.position.x, transform.position.y, (transform.position.z + 0.6f));
+                }
+                originalpoint = transform.position;
+                Ifwheel = true;
+                Ifmove = false;
+            }
+            if(Ifwheel )
+            {
+                float scroll = Input.GetAxis("Mouse ScrollWheel");
+                float speed = 80f;
+                if (scroll < 0f)
+                {
+                    transform.position += new Vector3(0, scroll * speed * Time.deltaTime, 0);
+                }
+                if(scroll > 0f && transform .position .y < originalpoint.y )
+                {
+                    transform.position += new Vector3(0, scroll * speed * Time.deltaTime, 0);
+                }
+                //
+                if(scroll != 0f)
+                {
+                    IfMove = true;
+                }
+                else
+                {
+                    IfMove = false;
+                }
+
+            }
+        }
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Ifwall ? Color.green : Color.red;
+            float rayLength = 30f;
+            float circleRadius = 0.5f;
+            Vector3 startPoint = throwpoint.position;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (State == PlayerState.Throw)
+            {
+                Vector3 endPoint = Ifwall ? Hitwall : ray.direction * rayLength;
+                Gizmos.DrawLine(startPoint, endPoint);
+                if (Ifwall)
+                {
+                    Gizmos.DrawWireSphere(endPoint, circleRadius);
+                }
+            }
+        }
+        
         private void Falldown()
         {
             Vector3 velocity = new Vector3(0f, 0f, 0f);
