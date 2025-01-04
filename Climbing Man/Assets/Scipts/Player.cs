@@ -160,6 +160,8 @@ namespace StarterAssets
         private bool isHanging = false;
         private float wireSpeed = 2.0f;
 
+        private bool isStanding = false;//ÊÇ·ñÕ¾Á¢
+
         private void Awake()
         {
             // get a reference to our main camera
@@ -847,29 +849,41 @@ namespace StarterAssets
               
                 float verticalOffset = -1f;
                 transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
-            }
 
-            if (Input.GetKeyDown(KeyCode.W) && isHanging)
-            {
-                isHanging = false;
-                float verticalOffset = 1f;
-                transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
-            }
-            else if (Input.GetKeyDown(KeyCode.S))
-            {
-                if (isHanging)
+                //Ðü¹Ò-ÌøÏÂ
+                if (isHanging && Input.GetMouseButtonDown(1))
                 {
                     State = PlayerState.Jumpdown;
                     wireObject = null;
                     return;
                 }
-                else
+            }
+
+            if (isStanding)
+            {
+                //Õ¾Á¢-Ðü¹Ò
+                if ( Input.GetMouseButtonDown(1))
                 {
                     isHanging = true;
+                    isStanding = false;
                     float verticalOffset = -1f;
                     transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
+
                 }
+
             }
+            //Ðü¹Ò-Õ¾Á¢
+            if ((Input.GetKeyDown(KeyCode.W)|| Input.GetKeyDown(KeyCode.S)) && isHanging)
+            {
+                isHanging = false;
+                isStanding = true;
+                float verticalOffset = 1f;
+                transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
+            }
+            
+            
+
+            
 
             float horizontalInput = Input.GetAxis("Horizontal");
             if(Mathf.Abs(horizontalInput)> 0.1f)
