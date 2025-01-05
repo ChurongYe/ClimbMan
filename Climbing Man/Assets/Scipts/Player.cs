@@ -820,18 +820,16 @@ namespace StarterAssets
                     Vector3 forwardDirection = wireObject.transform.forward;
                     transform.rotation = Quaternion.LookRotation(forwardDirection, Vector3.up);
 
-                    Debug.Log("Wire object detected: " + wireObject.name);
+                   
                 }
                 else
-                {
-                    Debug.Log("Raycast hit an object, but it is not wire");
+                {                   
                     wireObject = null;
                 }
             }
             else
             {
-                Debug.Log("Raycast did not hit any object.");
-                wireObject = null;
+               wireObject = null;
             }
 
         }
@@ -840,7 +838,7 @@ namespace StarterAssets
         {
             if (wireObject == null)
             {
-                Debug.LogWarning("wireObject is null.Exiting HandleWireActions.");
+                
                 return;
             }
 
@@ -848,20 +846,27 @@ namespace StarterAssets
 
             if (isHanging)
             {
-              
+                //Æ«ÒÆ
                 float verticalOffset = -1f;
                 transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
                 originalHangingRotation = transform.rotation;
 
-                float horizontalInput = Input.GetAxis("Horizontal");
-                Debug.Log("Horizontal Input in Hanging Mode:" + horizontalInput);
+                Vector3 wireDirection = wireObject.transform.up.normalized;
+                Vector3 cameraForward = _mainCamera.transform.forward;
+
+                float angle = Vector3.Angle (cameraForward, wireDirection );
+
+                bool useAD = angle >= 45f && angle <= 135f;
+                float horizontalInput = useAD ? Input.GetAxis("Horizontal") : Input.GetAxis("Vertical");
 
                 if (Mathf.Abs(horizontalInput) > 0.1f)
                 {
 
-                    Vector3 moveDirection = wireObject.transform.up.normalized;
-                    transform.position += moveDirection * horizontalInput * wireSpeed * Time.deltaTime;
-                    Debug.Log("Player moved along wire");
+                  
+                    Vector3 moveDirection = wireDirection * Mathf.Sign(horizontalInput);
+
+                    transform.position += moveDirection  * wireSpeed * Time.deltaTime;
+                   
                     
                 }
 
@@ -890,25 +895,16 @@ namespace StarterAssets
 
             if (isStanding)
             {
-                float horizontalInput = Input.GetAxis("Horizontal");
-                Debug.Log("Horizontal Input in Standing Mode:" + horizontalInput);
+                float angleBetweenCameraAndPlayerX = Vector3.Angle(_mainCamera.transform.forward, transform.right);
+               
 
-                if (Mathf.Abs(horizontalInput) > 0.1f)
-                {
-                    Vector3 moveDirection = wireObject.transform.up.normalized;
-                    transform.position += moveDirection * horizontalInput * wireSpeed * Time.deltaTime;
+                float inputHorizontal = Input.GetAxis("Horizontal");
+                float inputVertical = Input.GetAxis("Vertical");
 
-                    if(horizontalInput > 0)
-                    {
-                        transform.rotation = Quaternion.LookRotation(wireObject.transform.up, Vector3.up);
-                    }
-                    else if (horizontalInput < 0)
-                    {
-                        transform.rotation = Quaternion.LookRotation(-wireObject.transform.up, Vector3.up);
-                    }
-                }
+                Vector3 moveDirection = wireObject.transform.up.normalized;
+
                 //Õ¾Á¢-Ðü¹Ò
-                if ( Input.GetMouseButtonDown(1))
+                if (Input.GetMouseButtonDown(1))
                 {
                     isHanging = true;
                     isStanding = false;
@@ -916,19 +912,55 @@ namespace StarterAssets
 
                     float verticalOffsetHang = -1f;
                     transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffsetHang, wirePosition.z);
+                    return;
 
-
-                   
                 }
+
+                if ((angleBetweenCameraAndPlayerX >= 0f && angleBetweenCameraAndPlayerX <= 45f) ||
+                            (angleBetweenCameraAndPlayerX >= 135f && angleBetweenCameraAndPlayerX <= 180f))
+                {
+                    
+                    if (Mathf.Abs(inputHorizontal) > 0.1f)
+                    {
+                        transform.position += moveDirection * inputHorizontal * wireSpeed * Time.deltaTime;                     
+                        if (inputHorizontal > 0)
+                        {
+                            transform.rotation = Quaternion.LookRotation(wireObject.transform.up, Vector3.up);
+                        }
+                        else if (inputHorizontal < 0)
+                        {
+                            transform.rotation = Quaternion.LookRotation(-wireObject.transform.up, Vector3.up);
+                        }
+                    }
+                }
+                else if (angleBetweenCameraAndPlayerX > 45f && angleBetweenCameraAndPlayerX < 135f)
+                {                    
+                    if (Mathf.Abs(inputVertical) > 0.1f)
+                    {
+                        transform.position += moveDirection * inputVertical * wireSpeed * Time.deltaTime;
+             
+                        if (inputVertical > 0)
+                        {
+                            transform.rotation = Quaternion.LookRotation(wireObject.transform.up, Vector3.up);
+                        }
+                        else if (inputVertical < 0)
+                        {
+                            transform.rotation = Quaternion.LookRotation(-wireObject.transform.up, Vector3.up);
+                        }
+                    }
+                }
+
+
                 
+
+
 
 
             }
 
 
-            Debug.Log("Wire object detected:" + wireObject.name);
-            Debug.Log("Player State:" + State);
-            
+
+
         }
     }
 
