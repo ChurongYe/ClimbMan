@@ -156,11 +156,13 @@ namespace StarterAssets
 
         }
         public PlayerState State = PlayerState.Move;
+
+        //new
         private GameObject wireObject;
         private bool isHanging = false;
         private float wireSpeed = 2.0f;
-
         private bool isStanding = false;//ÊÇ·ñÕ¾Á¢
+        private Quaternion originalHangingRotation;//Ðü¹ÒµÄÔ­Ê¼Ðý×ª
 
         private void Awake()
         {
@@ -849,6 +851,33 @@ namespace StarterAssets
               
                 float verticalOffset = -1f;
                 transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
+                originalHangingRotation = transform.rotation;
+
+                float horizontalInput = Input.GetAxis("Horizontal");
+                Debug.Log("Horizontal Input in Hanging Mode:" + horizontalInput);
+
+                if (Mathf.Abs(horizontalInput) > 0.1f)
+                {
+
+                    Vector3 moveDirection = wireObject.transform.up.normalized;
+                    transform.position += moveDirection * horizontalInput * wireSpeed * Time.deltaTime;
+                    Debug.Log("Player moved along wire");
+                    
+                }
+
+                //Ðü¹Ò-Õ¾Á¢
+                if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.S)) && isHanging)
+                {
+                    isHanging = false;
+                    isStanding = true;
+
+                    Vector3 wireRight = wireObject.transform.right;
+                    float targetYRotation = Mathf.Atan2(wireRight.x, wireRight.z) * Mathf.Rad2Deg;
+                    transform.rotation = Quaternion.Euler(0, targetYRotation, 0);
+
+                    float verticalOffsetStand = 1f;
+                    transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffsetStand, wirePosition.z);
+                }
 
                 //Ðü¹Ò-ÌøÏÂ
                 if (isHanging && Input.GetMouseButtonDown(1))
@@ -861,38 +890,42 @@ namespace StarterAssets
 
             if (isStanding)
             {
+                float horizontalInput = Input.GetAxis("Horizontal");
+                Debug.Log("Horizontal Input in Standing Mode:" + horizontalInput);
+
+                if (Mathf.Abs(horizontalInput) > 0.1f)
+                {
+                    Vector3 moveDirection = wireObject.transform.up.normalized;
+                    transform.position += moveDirection * horizontalInput * wireSpeed * Time.deltaTime;
+
+                    if(horizontalInput > 0)
+                    {
+                        transform.rotation = Quaternion.LookRotation(wireObject.transform.up, Vector3.up);
+                    }
+                    else if (horizontalInput < 0)
+                    {
+                        transform.rotation = Quaternion.LookRotation(-wireObject.transform.up, Vector3.up);
+                    }
+                }
                 //Õ¾Á¢-Ðü¹Ò
                 if ( Input.GetMouseButtonDown(1))
                 {
                     isHanging = true;
                     isStanding = false;
-                    float verticalOffset = -1f;
-                    transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
+                    transform.rotation = originalHangingRotation;
 
+                    float verticalOffsetHang = -1f;
+                    transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffsetHang, wirePosition.z);
+
+
+                   
                 }
+                
+
 
             }
-            //Ðü¹Ò-Õ¾Á¢
-            if ((Input.GetKeyDown(KeyCode.W)|| Input.GetKeyDown(KeyCode.S)) && isHanging)
-            {
-                isHanging = false;
-                isStanding = true;
-                float verticalOffset = 1f;
-                transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
-            }
-            
-            
 
-            
 
-            float horizontalInput = Input.GetAxis("Horizontal");
-            if(Mathf.Abs(horizontalInput)> 0.1f)
-            {
-                Vector3 moveDirection = wireObject != null ? wireObject.transform.up : Vector3.zero;
-                Debug.Log("Wire Right Direction: " + moveDirection);
-                transform.position += moveDirection * horizontalInput * wireSpeed * Time.deltaTime;
-                //transform.position += wireObject.transform.right * horizontalInput * wireSpeed * Time.deltaTime;
-            }
             Debug.Log("Wire object detected:" + wireObject.name);
             Debug.Log("Player State:" + State);
             
