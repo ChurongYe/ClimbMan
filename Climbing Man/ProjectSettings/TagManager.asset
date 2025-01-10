@@ -16,6 +16,8 @@ TagManager:
   - SpLadder2
   - Wire
   - SpLadder
+  - Baby
+  - Home
   layers:
   - Default
   - TransparentFX
