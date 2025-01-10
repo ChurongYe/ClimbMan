@@ -76,7 +76,7 @@ namespace StarterAssets
         private bool Ifwheel = false;
         private bool Ifputdown = false;
         private Vector3 originalpoint;
-        private GameObject  wall;
+        private GameObject wall;
         RaycastHit hitwall;
         [Header("Player Climb")]
         public GameObject HeadCheck;
@@ -91,12 +91,12 @@ namespace StarterAssets
 
         public bool IfClimbmove;
 
-        private GameObject  Firsthit;
-        private  bool IfclimbOn = false;
-        private  bool IfclimbOff = false;
+        private GameObject Firsthit;
+        private bool IfclimbOn = false;
+        private bool IfclimbOff = false;
         //private  bool IfclimbRight = false;
-        public  bool IfclimbingOn = false;
-        public  bool IfclimbingOff = false;
+        public bool IfclimbingOn = false;
+        public bool IfclimbingOff = false;
         //private  bool IfRayRight = false;
         GameObject hitObjectOn;
         GameObject hitObjectOff;
@@ -112,6 +112,8 @@ namespace StarterAssets
         private GameObject P1;
         private GameObject P2;
         private GameObject Turn;
+        private GameObject Turn1;
+        private GameObject Turn2;
         private bool Ifturn1;
         private bool Ifturn2;
         [Header("Cinemachine")]
@@ -163,8 +165,8 @@ namespace StarterAssets
             }
         }
         //
-        public enum PlayerState 
-        {  
+        public enum PlayerState
+        {
             Move,
             Jump,
             Fall,
@@ -212,7 +214,7 @@ namespace StarterAssets
         private void Update()
         {
             //Debug.DrawRay(FallDownCheck.transform.position, Vector3.up.normalized * 0.5f, Color.blue);
-            switch (State )
+            switch (State)
             {
                 case PlayerState.Move:
                     Move();
@@ -222,7 +224,7 @@ namespace StarterAssets
                         BeforeJump();
                         State = PlayerState.Jump;
                     }
-                    else if(!Grounded)
+                    else if (!Grounded)
                     {
                         State = PlayerState.Jumpdown;
                     }
@@ -230,7 +232,7 @@ namespace StarterAssets
                 case PlayerState.Jumpdown:
                     JumpDown();
                     {
-                        if(Grounded)
+                        if (Grounded)
                         {
                             State = PlayerState.Move;
                         }
@@ -238,7 +240,7 @@ namespace StarterAssets
                     break;
                 case PlayerState.Jump:
                     Jump();
-                    if(Input.GetMouseButtonUp(0))
+                    if (Input.GetMouseButtonUp(0))
                     {
                         State = PlayerState.Fall;
                     }
@@ -277,10 +279,10 @@ namespace StarterAssets
                         Climbmove = true;
                         State = PlayerState.Climb;
                     }
-                    else if(Grounded )
+                    else if (Grounded)
                     {
                         State = PlayerState.Move;
-                    }   
+                    }
                     break;
                 case PlayerState.Climb:
                     Climb();
@@ -291,13 +293,13 @@ namespace StarterAssets
                         Falltime = 0.2f;
                         State = PlayerState.Falldown;
                     }
-                    if(Topcheck)
+                    if (Topcheck)
                     {
-                        if(timeout >0)
+                        if (timeout > 0)
                         {
                             timeout -= Time.deltaTime;
                         }
-                        if (Input.GetKeyDown(KeyCode.W) && timeout <0)
+                        if (Input.GetKeyDown(KeyCode.W) && timeout < 0)
                         {
                             timeout = -2f;
                             float Angle = Mathf.Repeat(hitObjectOn.transform.eulerAngles.y + 180f, 360f) - 180f;
@@ -306,7 +308,7 @@ namespace StarterAssets
                                 Target = new Vector3(transform.position.x, (transform.position.y + 3f),
                                 (transform.position.z + 1.5f));
                             }
-                            else if(Mathf.Approximately(Angle, 90f))
+                            else if (Mathf.Approximately(Angle, 90f))
                             {
                                 Target = new Vector3((transform.position.x + 1.5f), (transform.position.y + 3f),
                                 transform.position.z);
@@ -326,7 +328,7 @@ namespace StarterAssets
                         }
                     }
                     //Throw
-                    if(Input.GetMouseButtonUp(0))
+                    if (Input.GetMouseButtonUp(0))
                     {
                         i = 1;
                         State = PlayerState.Throw;
@@ -348,7 +350,7 @@ namespace StarterAssets
                     {
                         if (Ifwheel)
                         {
-                            if(FalldownCheck())
+                            if (FalldownCheck())
                             {
                                 HitObject = Firsthit;
                                 float Angle = Mathf.Repeat(Firsthit.transform.eulerAngles.y + 180f, 360f) - 180f;
@@ -377,12 +379,12 @@ namespace StarterAssets
                                 }
                                 Climbmove = true;
                                 UnityEngine.Cursor.visible = false;
-                                UnityEngine.Cursor.lockState = CursorLockMode.Locked ;
+                                UnityEngine.Cursor.lockState = CursorLockMode.Locked;
                                 State = PlayerState.Climb;
                                 Ifwheel = false;
-                            }    
+                            }
                         }
-                        if(Grounded )
+                        if (Grounded)
                         {
                             UnityEngine.Cursor.visible = false;
                             UnityEngine.Cursor.lockState = CursorLockMode.Locked;
@@ -398,7 +400,7 @@ namespace StarterAssets
                     {
                         State = PlayerState.Move;
                     }
-                    if (Falltime <0)
+                    if (Falltime < 0)
                     {
                         if (FalldownCheck())
                         {
@@ -442,7 +444,7 @@ namespace StarterAssets
         }
         private void FixedUpdate()
         {
-             GroundedCheck();
+            GroundedCheck();
         }
         private void LateUpdate()
         {
@@ -461,9 +463,9 @@ namespace StarterAssets
         private void CameraRotation()
         {
             if (!Camerarotate) return;
-                #region 
-                // if there is an input and camera position is not fixed
-                if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
+            #region 
+            // if there is an input and camera position is not fixed
+            if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
             {
                 //Don't multiply mouse input by Time.deltaTime;
                 float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
@@ -475,8 +477,8 @@ namespace StarterAssets
             _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
 
             // Cinemachine will follow this target
-             CinemachineCameraTarget.transform.rotation = Quaternion.Euler(CameraAngleOverride,
-               _cinemachineTargetYaw, 0.0f);
+            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(CameraAngleOverride,
+              _cinemachineTargetYaw, 0.0f);
             #endregion 
         }
         private void BeforeJump()
@@ -508,7 +510,7 @@ namespace StarterAssets
                 transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
                 PlayDirection = transform.forward;
                 //JumpForce
-                jumpForce = inputDirection.magnitude/3;
+                jumpForce = inputDirection.magnitude / 3;
                 jumpForce = Mathf.Clamp(jumpForce, 0.1f, 4f);
                 _verticalVelocity = Mathf.Sqrt(jumpForce * -Sensitivity * Gravity);
 
@@ -546,10 +548,10 @@ namespace StarterAssets
         }
         private void Move()
         {
-                //CameraOpen
-                Camerarotate = true;
-                #region
-                float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            //CameraOpen
+            Camerarotate = true;
+            #region
+            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
             if (_input.move == Vector2.zero)
             {
                 IfIdle = true;
@@ -562,42 +564,42 @@ namespace StarterAssets
 
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
 
-                float speedOffset = 0.1f;
+            float speedOffset = 0.1f;
 
-                // accelerate or decelerate to target speed
-                if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                    currentHorizontalSpeed > targetSpeed + speedOffset)
-                {
+            // accelerate or decelerate to target speed
+            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
+                currentHorizontalSpeed > targetSpeed + speedOffset)
+            {
 
-                    _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed,
-                        Time.deltaTime * SpeedChangeRate);
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed,
+                    Time.deltaTime * SpeedChangeRate);
 
-                    // round speed to 3 decimal places
-                    _speed = Mathf.Round(_speed * 1000f) / 1000f;
-                }
-                else
-                {
-                    _speed = targetSpeed;
-                }
+                // round speed to 3 decimal places
+                _speed = Mathf.Round(_speed * 1000f) / 1000f;
+            }
+            else
+            {
+                _speed = targetSpeed;
+            }
 
-                // normalise input direction
-                Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+            // normalise input direction
+            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
 
-                if (_input.move != Vector2.zero)
-                {
-                    _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                      _mainCamera.transform.eulerAngles.y;
-                    float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                        RotationSmoothTime);
+            if (_input.move != Vector2.zero)
+            {
+                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
+                                  _mainCamera.transform.eulerAngles.y;
+                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
+                    RotationSmoothTime);
 
-                    // rotate to face input direction relative to camera position
-                    transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-                }
+                // rotate to face input direction relative to camera position
+                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+            }
 
-                // move the player
-                Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-                _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime));
-                #endregion
+            // move the player
+            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime));
+            #endregion
         }
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
         {
@@ -642,8 +644,8 @@ namespace StarterAssets
             IfclimbOff = Physics.Raycast(FootCheck.transform.position,
                 Vector3.down.normalized, out hitdown, MaxDistanceOff, Ladder);
 
-            //Debug.DrawRay(HeadCheck.transform.position, Vector3.up.normalized * MaxDistanceOn, Color.blue);
-            //Debug.DrawRay(FootCheck.transform.position, Vector3.down.normalized * MaxDistanceOff, Color.blue);
+            Debug.DrawRay(HeadCheck.transform.position, Vector3.up.normalized * MaxDistanceOn, Color.blue);
+            Debug.DrawRay(FootCheck.transform.position, Vector3.down.normalized * MaxDistanceOff, Color.blue);
             //Direction
             if (Input.GetKeyDown(KeyCode.W) && IfclimbOn)
             {
@@ -720,7 +722,7 @@ namespace StarterAssets
                     target = new Vector3(transform.position.x, (hitObjectOff.transform.position.y - 0.5f),
                         (hitObjectOff.transform.position.z + 0.5f));
                 }
-                transform.position = Vector3.MoveTowards(transform.position,target, 4f * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, target, 4f * Time.deltaTime);
                 if (Vector3.Distance(transform.position, target) < 0.1f)
                 {
                     IfclimbingOff = false;
@@ -743,13 +745,13 @@ namespace StarterAssets
                     IfClimbmove = false;
                 }
                 //
-                if (HitObject != null && HitObject.tag == "Ladder"|| HitObject.tag == "Top")
+                if (HitObject != null && HitObject.tag == "Ladder" || HitObject.tag == "Top")
                 {
                     P1 = HitObject.GetComponent<Ladder>().Point1;
                     P2 = HitObject.GetComponent<Ladder>().Point2;
                     if (_input.move.x > 0)
                     {
-                        transform.position = Vector3.MoveTowards(transform.position, P1.transform .position , speed * Time.deltaTime);
+                        transform.position = Vector3.MoveTowards(transform.position, P1.transform.position, speed * Time.deltaTime);
 
                     }
                     if (_input.move.x < 0)
@@ -766,7 +768,7 @@ namespace StarterAssets
                     Turn = HitObject.GetComponent<SpecialLadder>().Turn;
                     if (Ifturn2)
                     {
-                        transform.position = Vector3.MoveTowards(transform.position, 
+                        transform.position = Vector3.MoveTowards(transform.position,
                             P2.transform.position, speed * Time.deltaTime);
                         if (Vector3.Distance(transform.position, P2.transform.position) < 0.1f)
                         {
@@ -777,14 +779,14 @@ namespace StarterAssets
                     {
                         if (_input.move.x > 0)
                         {
-                            transform.position = Vector3.MoveTowards(transform.position, 
+                            transform.position = Vector3.MoveTowards(transform.position,
                                 P1.transform.position, speed * Time.deltaTime);
 
                         }
                         if (_input.move.x < 0)
                         {
                             //position.x += _input.move.x * speed * Time.deltaTime;
-                            transform.position = Vector3.MoveTowards(transform.position, 
+                            transform.position = Vector3.MoveTowards(transform.position,
                                 P2.transform.position, speed * Time.deltaTime);
 
                         }
@@ -806,9 +808,9 @@ namespace StarterAssets
                     Turn = HitObject.GetComponent<SpecialLadder>().Turn;
                     if (Ifturn1)
                     {
-                        transform.position = Vector3.MoveTowards(transform.position, 
+                        transform.position = Vector3.MoveTowards(transform.position,
                             P1.transform.position, speed * Time.deltaTime);
-                        if(Vector3.Distance(transform.position, P1.transform.position) < 0.1f)
+                        if (Vector3.Distance(transform.position, P1.transform.position) < 0.1f)
                         {
                             Ifturn1 = false;
                             Debug.Log($"{P1.name}");
@@ -818,14 +820,14 @@ namespace StarterAssets
                     {
                         if (_input.move.x > 0)
                         {
-                            transform.position = Vector3.MoveTowards(transform.position, 
+                            transform.position = Vector3.MoveTowards(transform.position,
                                 P1.transform.position, speed * Time.deltaTime);
 
                         }
                         if (_input.move.x < 0)
                         {
                             //position.x += _input.move.x * speed * Time.deltaTime;
-                            transform.position = Vector3.MoveTowards(transform.position, 
+                            transform.position = Vector3.MoveTowards(transform.position,
                                 P2.transform.position, speed * Time.deltaTime);
 
                         }
@@ -842,48 +844,133 @@ namespace StarterAssets
                     }
 
                 }
-            }
-            //TopCheck
-            if (hitObjectOn != null)
-            {
-                if (hitObjectOn.tag == "Top" && transform.position.y - (hitObjectOn.transform.position.y - 0.5f) < 0.01f)
+                else if (HitObject != null && HitObject.tag == "SpLadder")
                 {
-                    Topcheck = true;
+                    P1 = HitObject.GetComponent<SpecialLadder>().Point1;
+                    P2 = HitObject.GetComponent<SpecialLadder>().Point2;
+                    if (HitObject.GetComponent<SpecialLadder>().Turn1 != null)
+                    {
+                        Turn1 = HitObject.GetComponent<SpecialLadder>().Turn1;
+                    }
+                    if (HitObject.GetComponent<SpecialLadder>().Turn2 != null)
+                    {
+                        Turn2 = HitObject.GetComponent<SpecialLadder>().Turn2;
+                    }
+                    if (Ifturn1)
+                    {
+                        transform.position = Vector3.MoveTowards(transform.position,
+                            P1.transform.position, speed * Time.deltaTime);
+                        if (Vector3.Distance(transform.position, P1.transform.position) < 0.1f)
+                        {
+                            Ifturn1 = false;
+                            Debug.Log($"{P1.name}");
+                        }
+                    }
+                    if (Ifturn2)
+                    {
+                        transform.position = Vector3.MoveTowards(transform.position,
+                            P2.transform.position, speed * Time.deltaTime);
+                        if (Vector3.Distance(transform.position, P2.transform.position) < 0.1f)
+                        {
+                            Ifturn2 = false;
+                        }
+                    }
+                    if (!Ifturn1)
+                    {
+                        if (_input.move.x > 0)
+                        {
+                            transform.position = Vector3.MoveTowards(transform.position,
+                                P1.transform.position, speed * Time.deltaTime);
+
+                        }
+                        if (_input.move.x < 0)
+                        {
+                            //position.x += _input.move.x * speed * Time.deltaTime;
+                            transform.position = Vector3.MoveTowards(transform.position,
+                                P2.transform.position, speed * Time.deltaTime);
+
+                        }
+
+
+                        if (Vector3.Distance(transform.position, P1.transform.position) < 0.1f)
+                        {
+                            if (_input.move.x > 0)
+                            {
+                                HitObject = Turn1;
+                                transform.rotation = HitObject.transform.rotation;
+                                Ifturn2 = true;
+                            }
+                        }
+                    }
+
+                    if (!Ifturn2)
+                    {
+                        if (_input.move.x > 0)
+                        {
+                            transform.position = Vector3.MoveTowards(transform.position,
+                                P1.transform.position, speed * Time.deltaTime);
+
+                        }
+                        if (_input.move.x < 0)
+                        {
+                            //position.x += _input.move.x * speed * Time.deltaTime;
+                            transform.position = Vector3.MoveTowards(transform.position,
+                                P2.transform.position, speed * Time.deltaTime);
+
+                        }
+                        if (Vector3.Distance(transform.position, P2.transform.position) < 0.1f)
+                        {
+                            if (_input.move.x < 0)
+                            {
+                                HitObject = Turn2;
+                                transform.rotation = HitObject.transform.rotation;
+                                Ifturn1 = true;
+                            }
+                        }
+                    }
                 }
-                else Topcheck = false;
+               //TopCheck
+                if (hitObjectOn != null)
+                {
+                    if (hitObjectOn.name  == "Top" && transform.position.y - (hitObjectOn.transform.position.y - 0.5f) < 0.01f)
+                    {
+                        Topcheck = true;
+                    }
+                    else Topcheck = false;
+                }
             }
 
-        }    
+        }
         private void Totop()
         {
-            
+
             Vector3 velocity = new Vector3(0f, 0f, 0f);
             velocity.y += Gravity * Time.deltaTime * 0.3f;
-            if(Ifgo )transform.position = Vector3.MoveTowards(transform.position, Target,8f * Time .deltaTime );
-            if(Vector3 .Distance (transform.position, Target) < 0.1f)
+            if (Ifgo) transform.position = Vector3.MoveTowards(transform.position, Target, 8f * Time.deltaTime);
+            if (Vector3.Distance(transform.position, Target) < 0.1f)
             {
                 Iffall = true;
                 Ifgo = false;
             }
-            if(Iffall)
+            if (Iffall)
             {
                 Vector3 targetPosition = new Vector3(transform.position.x, velocity.y, transform.position.z);
                 targetPosition = new Vector3(transform.position.x, velocity.y, transform.position.z);
                 transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * 4f);
             }
-            
+
         }
         private void Throw()
         {
             UnityEngine.Cursor.visible = true;
-            UnityEngine.Cursor.lockState = CursorLockMode.Confined ;
+            UnityEngine.Cursor.lockState = CursorLockMode.Confined;
             RaycastHit hit;
             RaycastHit hit1;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             float rayLength = 10.0f;
-            Physics.Raycast(transform .position, transform.forward , out hit,5f, Wall);
+            Physics.Raycast(transform.position, transform.forward, out hit, 5f, Wall);
             wall = hit.collider.gameObject;
-            if(i == 1) Ifwall = Physics.Raycast(ray, out hitwall, 50f, Wall);
+            if (i == 1) Ifwall = Physics.Raycast(ray, out hitwall, 50f, Wall);
             if (Ifwall)
             {
                 Hitwall = hitwall.point;
@@ -901,7 +988,7 @@ namespace StarterAssets
             {
                 if (Ifwall)
                 {
-                    if (Input.GetMouseButtonUp(0) && wall== hitwall.collider .gameObject )
+                    if (Input.GetMouseButtonUp(0) && wall == hitwall.collider.gameObject)
                     {
                         Ifputdown = false;
                         Ifmove = true;
@@ -909,19 +996,19 @@ namespace StarterAssets
                     }
                 }
             }
-            if(Ifmove)
+            if (Ifmove)
             {
                 float speed = 0.03f;
                 transform.position = Vector3.MoveTowards(transform.position, Hitwall, speed);
             }
-            if(Ifmove && Vector3.Distance(transform.position, Hitwall) <0.1f)
+            if (Ifmove && Vector3.Distance(transform.position, Hitwall) < 0.1f)
             {
                 float Angle = Mathf.Repeat(transform.eulerAngles.y + 180f, 360f) - 180f;
                 if (Mathf.Approximately(Angle, 0f))
                 {
                     transform.position = new Vector3(transform.position.x, transform.position.y, (transform.position.z - 0.6f));
                 }
-                else if(Mathf.Approximately(Angle, 90f))
+                else if (Mathf.Approximately(Angle, 90f))
                 {
                     transform.position = new Vector3((transform.position.x - 0.6f), transform.position.y, transform.position.z);
                 }
@@ -937,7 +1024,7 @@ namespace StarterAssets
                 Ifwheel = true;
                 Ifmove = false;
             }
-            if(Ifwheel )
+            if (Ifwheel)
             {
                 float scroll = Input.GetAxis("Mouse ScrollWheel");
                 float speed = 80f;
@@ -945,12 +1032,12 @@ namespace StarterAssets
                 {
                     transform.position += new Vector3(0, scroll * speed * Time.deltaTime, 0);
                 }
-                if(scroll > 0f && transform .position .y < originalpoint.y )
+                if (scroll > 0f && transform.position.y < originalpoint.y)
                 {
                     transform.position += new Vector3(0, scroll * speed * Time.deltaTime, 0);
                 }
                 //
-                if(scroll != 0f)
+                if (scroll != 0f)
                 {
                     IfMove = true;
                 }
@@ -978,7 +1065,7 @@ namespace StarterAssets
                 }
             }
         }
-        
+
         private void Falldown()
         {
             Vector3 velocity = new Vector3(0f, 0f, 0f);
@@ -1048,6 +1135,7 @@ namespace StarterAssets
             }
 
             Vector3 wirePosition = wireObject.transform.position;
+            Vector3 wireUpDirection = wireObject.transform.up.normalized;  // 获取钢索的“绿色箭头”方向
 
             if (isHanging)
             {
@@ -1056,20 +1144,18 @@ namespace StarterAssets
                 transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
                 originalHangingRotation = transform.rotation;
 
-                Vector3 wireDirection = wireObject.transform.up.normalized;
+                // 镜头方向与钢索方向的角度计算
                 Vector3 cameraForward = _mainCamera.transform.forward;
+                float angle = Vector3.Angle(cameraForward, wireUpDirection);
 
-                float angle = Vector3.Angle(cameraForward, wireDirection);
-
-                bool useAD = angle >= 45f && angle <= 135f;
+                bool useAD = angle >= 45f && angle <= 135f;  // 判断使用水平还是垂直输入
                 float horizontalInput = useAD ? Input.GetAxis("Horizontal") : Input.GetAxis("Vertical");
 
                 if (Mathf.Abs(horizontalInput) > 0.1f)
                 {
 
 
-                    Vector3 moveDirection = wireDirection * Mathf.Sign(horizontalInput);
-
+                    Vector3 moveDirection = wireUpDirection * Mathf.Sign(horizontalInput);
                     transform.position += moveDirection * wireSpeed * Time.deltaTime;
 
 
@@ -1156,6 +1242,6 @@ namespace StarterAssets
                 }
             }
         }
-    }
 
+    }
 }

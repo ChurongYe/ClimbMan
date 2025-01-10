@@ -15,6 +15,7 @@ TagManager:
   - SpLadder1
   - SpLadder2
   - Wire
+  - SpLadder
   layers:
   - Default
   - TransparentFX

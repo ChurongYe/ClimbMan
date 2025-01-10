@@ -7,6 +7,8 @@ public class SpecialLadder : MonoBehaviour
     public GameObject Point1;
     public GameObject Point2;
     public GameObject Turn;
+    public GameObject Turn1;
+    public GameObject Turn2;
     void Start()
     {
         
