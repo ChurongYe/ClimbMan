@@ -1154,8 +1154,9 @@ namespace StarterAssets
                 if (Mathf.Abs(horizontalInput) > 0.1f)
                 {
 
-
                     Vector3 moveDirection = wireUpDirection * Mathf.Sign(horizontalInput);
+                    Debug.Log(moveDirection);
+
                     transform.position += moveDirection * wireSpeed * Time.deltaTime;
 
 
