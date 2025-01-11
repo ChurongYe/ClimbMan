@@ -126,6 +126,8 @@ namespace StarterAssets
 
         public bool LockCameraPosition = false;
 
+        private Vector3 wireToward = Vector3.zero;
+
         //mouse control
         public bool Ifjump = false;
         [Range(-5, 5)]
@@ -183,6 +185,7 @@ namespace StarterAssets
         //new
         private GameObject wireObject;
         private bool isHanging = false;
+        private bool isInitHangingPos = false;
         private float wireSpeed = 2.0f;
         private bool isStanding = false;//是否站立
         private Quaternion originalHangingRotation;//悬挂的原始旋转
@@ -1099,9 +1102,11 @@ namespace StarterAssets
             {
                 if (hit.collider != null && hit.collider.CompareTag("Wire"))//Tag
                 {
+                    Debug.Log("-----CheckWireCollision----");
                     wireObject = hit.collider.gameObject;
                     State = PlayerState.Wire;
                     isHanging = true;
+                    isInitHangingPos = false;
 
                     //对齐
                     Vector3 wirePosition = wireObject.transform.position;
@@ -1128,6 +1133,7 @@ namespace StarterAssets
 
         private void HandleWireActions()
         {
+            
             if (wireObject == null)
             {
 
@@ -1136,12 +1142,14 @@ namespace StarterAssets
 
             Vector3 wirePosition = wireObject.transform.position;
             Vector3 wireUpDirection = wireObject.transform.up.normalized;  // 获取钢索的“绿色箭头”方向
+            
 
             if (isHanging)
             {
                 //偏移
                 float verticalOffset = -1f;
-                transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
+                
+               // transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
                 originalHangingRotation = transform.rotation;
 
                 // 镜头方向与钢索方向的角度计算
@@ -1151,13 +1159,46 @@ namespace StarterAssets
                 bool useAD = angle >= 45f && angle <= 135f;  // 判断使用水平还是垂直输入
                 float horizontalInput = useAD ? Input.GetAxis("Horizontal") : Input.GetAxis("Vertical");
 
+                RopeItem wireRopeItem = wireObject.GetComponent<RopeItem>();
+
+                if (!isInitHangingPos)
+                {
+                    Debug.Log("isInitHangingPos");
+                    if (wireRopeItem.ropeDir == RopeDir.X)
+                    {
+                        transform.position = new Vector3(transform.position.x, wireRopeItem.startNode.transform.position.y + verticalOffset, wireRopeItem.startNode.transform.position.z);
+                    }
+
+                    // if (wireRopeItem.ropeDir == RopeDir.Y)
+                    // {
+                    //     transform.position = new Vector3(transform.position.x, wireRopeItem.GetStartPosition(), wirePosition.z);
+                    // }
+
+                    if (wireRopeItem.ropeDir == RopeDir.Z)
+                    {
+                        transform.position = new Vector3(wireRopeItem.startNode.transform.position.x, wireRopeItem.startNode.transform.position.y + verticalOffset, transform.position.z);
+                    }
+                    isInitHangingPos = true;
+                }
+
                 if (Mathf.Abs(horizontalInput) > 0.1f)
                 {
 
                     Vector3 moveDirection = wireUpDirection * Mathf.Sign(horizontalInput);
-                    Debug.Log(moveDirection);
+                    wireToward = moveDirection;
+                    Vector3 _moveD = moveDirection * wireSpeed * Time.deltaTime;
+                    transform.position += _moveD;
+                    float max = Mathf.Max(wireRopeItem.GetStartPosition(), wireRopeItem.GetEndPosition());
+                    float min = Mathf.Min(wireRopeItem.GetStartPosition(), wireRopeItem.GetEndPosition());
 
-                    transform.position += moveDirection * wireSpeed * Time.deltaTime;
+                    if (wireRopeItem.ropeDir == RopeDir.X)
+                    {
+                        transform.position = new Vector3(Mathf.Clamp(transform.position.x,  min,max), transform.position.y, transform.position.z);
+                    }
+                    if (wireRopeItem.ropeDir == RopeDir.Z)
+                    {
+                        transform.position = new Vector3(transform.position.x, transform.position.y, Mathf.Clamp(transform.position.z, min, max));
+                    }
 
 
                 }
