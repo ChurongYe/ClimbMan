@@ -1067,6 +1067,18 @@ namespace StarterAssets
                     Gizmos.DrawWireSphere(endPoint, circleRadius);
                 }
             }
+
+            //钢索球形检测
+            Gizmos.color = Color.yellow;
+            float detectionRadius = 1f;
+            Vector3 detectionPoint = transform.position + Vector3.up * 0.5f;
+
+            if (State == PlayerState.Wire)
+            {
+                Gizmos.DrawWireSphere(detectionPoint, detectionRadius);
+                Gizmos.DrawLine(transform.position, detectionPoint);
+               
+            }
         }
 
         private void Falldown()
@@ -1097,8 +1109,8 @@ namespace StarterAssets
             RaycastHit hit;
             Vector3 rayStart = transform.position + Vector3.up * 0.5f;
             Debug.DrawRay(rayStart, Vector3.down * 1.5f, Color.red, 1.0f);//down
-      
 
+            //Debug.Log("CheckWireCollision() called and set State to Wire.");
             if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.5f))
             {
                 if (hit.collider != null && hit.collider.CompareTag("Wire"))//Tag
@@ -1142,7 +1154,7 @@ namespace StarterAssets
             }
 
             Vector3 wirePosition = wireObject.transform.position;
-            Vector3 wireUpDirection = wireObject.transform.up.normalized;  // 获取钢索的“绿色箭头”方向
+            Vector3 wireUpDirection = wireObject.transform.up.normalized;  
             RopeItem wireRopeItem = wireObject.GetComponent<RopeItem>();
 
             float max = Mathf.Max(wireRopeItem.GetStartPosition(), wireRopeItem.GetEndPosition());
@@ -1150,24 +1162,35 @@ namespace StarterAssets
 
             if (isHanging)
             {
-                //偏移
+
+                // 调用射线
+                if (CheckLadderInAllDirections(transform.position + Vector3.up * 0.5f, 1f, 1.5f))
+                {
+                    Debug.Log("Ladder detected during hanging state!");
+                    return;  
+                }
+                //结束
+
+
+
+                //offset
                 float verticalOffset = -1f;
                 
                // transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
                 originalHangingRotation = transform.rotation;
 
-                // 镜头方向与钢索方向的角度计算
+                
                 Vector3 cameraForward = _mainCamera.transform.forward;
                 float angle = Vector3.Angle(cameraForward, wireUpDirection);
 
-                bool useAD = angle >= 45f && angle <= 135f;  // 判断使用水平还是垂直输入
+                bool useAD = angle >= 45f && angle <= 135f;  
                 float horizontalInput = useAD ? Input.GetAxis("Horizontal") : Input.GetAxis("Vertical");
 
                 
 
                 if (!isInitHangingPos)
                 {
-                    Debug.Log("isInitHangingPos");
+                    //Debug.Log("isInitHangingPos");
                     if (wireRopeItem.ropeDir == RopeDir.X)
                     {
                         transform.position = new Vector3(transform.position.x, wireRopeItem.startNode.transform.position.y + verticalOffset, wireRopeItem.startNode.transform.position.z);
@@ -1183,11 +1206,12 @@ namespace StarterAssets
                         transform.position = new Vector3(wireRopeItem.startNode.transform.position.x, wireRopeItem.startNode.transform.position.y + verticalOffset, transform.position.z);
                     }
                     isInitHangingPos = true;
+                    
                 }
 
                 if (Mathf.Abs(horizontalInput) > 0.1f)
                 {
-
+                    Debug.Log($"Character hanging position: {transform.position}");
                     Vector3 moveDirection = wireUpDirection * Mathf.Sign(horizontalInput);
                     wireToward = moveDirection;
                     Vector3 _moveD = moveDirection * wireSpeed * Time.deltaTime;
@@ -1238,9 +1262,21 @@ namespace StarterAssets
 
             if (isStanding)
             {
+
+                // 调用射线
+                if (CheckLadderInAllDirections(transform.position + Vector3.up * 0.5f, 1f, 1.5f))
+                {
+                    //Debug.Log("Ladder detected during standing state!");
+                    State = PlayerState.Climb;
+                    //Debug.Log($"State changed to Climb: {State}");
+                    return;  
+                }
+                //结束
+
+               
+
+
                 float angleBetweenCameraAndPlayerX = Vector3.Angle(_mainCamera.transform.forward, transform.right);
-
-
                 float inputHorizontal = Input.GetAxis("Horizontal");
                 float inputVertical = Input.GetAxis("Vertical");
 
@@ -1306,7 +1342,46 @@ namespace StarterAssets
                     transform.position = new Vector3(transform.position.x, transform.position.y, Mathf.Clamp(transform.position.z, min, max));
                 }
             }
+
+            Debug.Log($"Final State in HandleWireActions: {State}");
         }
+
+        //射线
+        private bool CheckLadderInAllDirections(Vector3 detectionPoint, float detectionRadius, float detectionDistance)
+        {
+            RaycastHit hitInfo; 
+            Vector3[] directions = new Vector3[]
+            {
+              Vector3.up,    
+              Vector3.down,  
+              Vector3.forward,  
+              Vector3.back,  
+              Vector3.left,  
+              Vector3.right  
+            };
+
+            // 
+            foreach (Vector3 dir in directions)
+            {
+                if (Physics.SphereCast(detectionPoint, detectionRadius, dir, out hitInfo, detectionDistance, Ladder))
+                {
+                    GameObject hitObject = hitInfo.collider.gameObject;  // 检测到的物体
+                    Debug.Log($"Hit object: {hitObject.name} in direction {dir}, Position: {hitInfo.point}");
+
+                    if (hitInfo.collider.gameObject.layer == LayerMask.NameToLayer("Ladder"))
+                    {
+                        Debug.Log("Ladder detected by Layer!");
+                        Firsthit = hitObject;  // 碰撞的梯子
+                        State = PlayerState.Climb;  
+                        Climbmove = true; 
+                        return true; 
+                        
+                    }
+                }
+            }
+            return false;  // 没有检测到梯子时返回
+        }
+
 
     }
 }
