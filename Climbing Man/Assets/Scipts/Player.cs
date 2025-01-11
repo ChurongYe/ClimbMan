@@ -1096,7 +1096,8 @@ namespace StarterAssets
         {
             RaycastHit hit;
             Vector3 rayStart = transform.position + Vector3.up * 0.5f;
-            Debug.DrawRay(rayStart, Vector3.down * 1.5f, Color.red, 1.0f);
+            Debug.DrawRay(rayStart, Vector3.down * 1.5f, Color.red, 1.0f);//down
+      
 
             if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.5f))
             {
@@ -1108,12 +1109,12 @@ namespace StarterAssets
                     isHanging = true;
                     isInitHangingPos = false;
 
-                    //对齐
+                    //align position
                     Vector3 wirePosition = wireObject.transform.position;
                     float verticalOffset = -1f;
                     transform.position = new Vector3(transform.position.x, wirePosition.y + verticalOffset, wirePosition.z);
 
-                    //旋转
+                    //rotation
                     Vector3 forwardDirection = wireObject.transform.forward;
                     transform.rotation = Quaternion.LookRotation(forwardDirection, Vector3.up);
 
@@ -1142,7 +1143,10 @@ namespace StarterAssets
 
             Vector3 wirePosition = wireObject.transform.position;
             Vector3 wireUpDirection = wireObject.transform.up.normalized;  // 获取钢索的“绿色箭头”方向
-            
+            RopeItem wireRopeItem = wireObject.GetComponent<RopeItem>();
+
+            float max = Mathf.Max(wireRopeItem.GetStartPosition(), wireRopeItem.GetEndPosition());
+            float min = Mathf.Min(wireRopeItem.GetStartPosition(), wireRopeItem.GetEndPosition());
 
             if (isHanging)
             {
@@ -1159,7 +1163,7 @@ namespace StarterAssets
                 bool useAD = angle >= 45f && angle <= 135f;  // 判断使用水平还是垂直输入
                 float horizontalInput = useAD ? Input.GetAxis("Horizontal") : Input.GetAxis("Vertical");
 
-                RopeItem wireRopeItem = wireObject.GetComponent<RopeItem>();
+                
 
                 if (!isInitHangingPos)
                 {
@@ -1187,9 +1191,15 @@ namespace StarterAssets
                     Vector3 moveDirection = wireUpDirection * Mathf.Sign(horizontalInput);
                     wireToward = moveDirection;
                     Vector3 _moveD = moveDirection * wireSpeed * Time.deltaTime;
-                    transform.position += _moveD;
-                    float max = Mathf.Max(wireRopeItem.GetStartPosition(), wireRopeItem.GetEndPosition());
-                    float min = Mathf.Min(wireRopeItem.GetStartPosition(), wireRopeItem.GetEndPosition());
+                    if(wireRopeItem.ropeDir == RopeDir.X) {
+                        transform.position += _moveD;
+                    }
+                    if (wireRopeItem.ropeDir == RopeDir.Z)
+                    {
+                        transform.position -= _moveD;
+                    }
+                    //transform.position += _moveD;
+                   
 
                     if (wireRopeItem.ropeDir == RopeDir.X)
                     {
@@ -1248,7 +1258,7 @@ namespace StarterAssets
                     return;
 
                 }
-
+                //ws
                 if ((angleBetweenCameraAndPlayerX >= 0f && angleBetweenCameraAndPlayerX <= 45f) ||
                             (angleBetweenCameraAndPlayerX >= 135f && angleBetweenCameraAndPlayerX <= 180f))
                 {
@@ -1256,6 +1266,9 @@ namespace StarterAssets
                     if (Mathf.Abs(inputHorizontal) > 0.1f)
                     {
                         transform.position += moveDirection * inputHorizontal * wireSpeed * Time.deltaTime;
+                        //transform.position = new Vector3(transform.position.x, transform.position.y, Mathf.Clamp(transform.position.z, min, max));
+
+
                         if (inputHorizontal > 0)
                         {
                             transform.rotation = Quaternion.LookRotation(wireObject.transform.up, Vector3.up);
@@ -1265,12 +1278,14 @@ namespace StarterAssets
                             transform.rotation = Quaternion.LookRotation(-wireObject.transform.up, Vector3.up);
                         }
                     }
-                }
+                } //ad
                 else if (angleBetweenCameraAndPlayerX > 45f && angleBetweenCameraAndPlayerX < 135f)
                 {
                     if (Mathf.Abs(inputVertical) > 0.1f)
                     {
                         transform.position += moveDirection * inputVertical * wireSpeed * Time.deltaTime;
+                        //transform.position = new Vector3(Mathf.Clamp(transform.position.x, min, max), transform.position.y, transform.position.z);
+
 
                         if (inputVertical > 0)
                         {
@@ -1281,6 +1296,14 @@ namespace StarterAssets
                             transform.rotation = Quaternion.LookRotation(-wireObject.transform.up, Vector3.up);
                         }
                     }
+                }
+                if (wireRopeItem.ropeDir == RopeDir.X)
+                {
+                    transform.position = new Vector3(Mathf.Clamp(transform.position.x, min, max), transform.position.y, transform.position.z);
+                }
+                if (wireRopeItem.ropeDir == RopeDir.Z)
+                {
+                    transform.position = new Vector3(transform.position.x, transform.position.y, Mathf.Clamp(transform.position.z, min, max));
                 }
             }
         }
