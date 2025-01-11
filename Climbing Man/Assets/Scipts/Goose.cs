@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class Goose : MonoBehaviour
 {
@@ -12,6 +13,11 @@ public class Goose : MonoBehaviour
     [Header("Home empty object slot")]
     public List<Transform> homeSlots;
 
+    [Header("UI Elements")]
+    public TextMeshProUGUI progressText;
+    private int placeBabyCount = 0;
+    private bool uiShown = false;
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Baby") && currentBaby == null)
@@ -20,6 +26,7 @@ public class Goose : MonoBehaviour
             if (babyScript != null && !babyScript.isPlacedAtHome)
             {
                 AttachBabyToPlayer(other.gameObject);
+                
             }
             
         }
@@ -36,6 +43,13 @@ public class Goose : MonoBehaviour
         baby.transform.localPosition = Vector3.zero;
         baby.transform.localRotation = Quaternion.identity;
         //baby.transform.localScale = Vector3.one;
+
+        if(!uiShown)
+        {
+            progressText.gameObject.SetActive(true);
+            UpdateProgressText();
+            uiShown = true;
+        }
     }
 
     void TransferBabyToHome()
@@ -55,9 +69,36 @@ public class Goose : MonoBehaviour
                     babyScript.isPlacedAtHome = true;
                 }
                 currentBaby = null;
+               
+                placeBabyCount++;
+                UpdateProgressText();
+
+                CheckGameOver();
                 break;
             }
         }
+    }
+
+    
+
+    void UpdateProgressText()
+    {
+        progressText.text = $"{placeBabyCount}/{homeSlots.Count}";
+      
+    } 
+
+    void CheckGameOver()
+    {
+        foreach(Transform slot in homeSlots)
+        {
+            if (slot.childCount == 0) return;
+        }
+        GameOver();
+    }
+
+    void GameOver()
+    {
+        Debug.Log("Game Over");
     }
 
 }
